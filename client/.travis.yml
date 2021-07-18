@@ -1,0 +1,24 @@
+language: generic 
+
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t kildares/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true kildares/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t kildares/multi-client ./client
+  - docker build -t kildares/multi-nginx ./nginx
+  - docker build -t kildares/multi-server ./server
+  - docker build -t kildares/multi-worker ./worker
+
+  -echo $DOCKER_PASSWORD | docker login -u "$DOCKER_ID" --password-stdin
+  
+  -docker push kildares/multi-client
+  -docker push kildares/multi-nginx
+  -docker push kildares/multi-server
+  -docker push kildares/multi-worker
